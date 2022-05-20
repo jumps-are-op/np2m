@@ -1,0 +1,77 @@
+#!/bin/sh
+
+# Made by jumps-are-op
+# This software is under GPLv3 and comes with ABSOLUTE NO WARRANTY
+
+main(){
+	for arg;do
+		case "$arg" in
+			--enable)enable=1;;
+			--disable)enable=0;;
+			--switch)switch=1;;
+			*)disHelp;;
+		esac
+	done
+
+	if [ -n "$switch" ] && [ -n "$enable" ];then
+		echo "$0: Too many options"> /dev/stderr
+		exit 1
+	elif [ "$enable" = 1 ];then
+		enable
+	elif [ "$enable" = 0 ];then
+		disable
+	else
+		switch
+	fi	
+}
+
+switch(){
+	if setxkbmap -query | grep -q "keypad:";then
+		disable
+	else
+		enable
+	fi
+}
+
+enable(){
+	setxkbmap -option keypad:pointerkeys
+	if [ -t 1 ];then
+		echo "Enabled numPad mouse"
+		echo "Press shift + num Lock to enable numPad mouse"
+		echo "7, 8, 9 to move up"
+		echo "4, 6 to move right and left"
+		echo "1, 2, 3 to move down"
+	fi
+}
+
+disable(){
+	setxkbmap -option -option $(setxkbmap -query |
+		sed -n 's/options:\s*\(keypad:[^:]*,\)\?\|,keypad:[^,]*//gp')
+	if [ -t 1 ];then
+		echo "Disabled numPad mouse"
+	fi
+}
+
+disHelp(){
+	{
+		echo "np2m NumPad to Mouse"
+		echo "Copyright (C) 2022 jumps-are-op"
+		echo "This software is under GPLv3 and comes with ABSOLUTE NO WARRANTY"
+		echo ""
+		echo "USAGE:"
+		echo "	$0 [OPTIONS]"
+		echo ""
+		echo "OPTIONS:"
+		echo "	--enable	change numPad to semi-functional mouse"
+		echo "	--disable	disable numPad mouse"
+		echo "	--switch	switch between numPad and mouse (default)"
+		echo "	--help  	display help (this message)"
+		echo ""
+		echo "EXAMPLE:"
+		echo "	$0 --enable"
+		echo "	This change numPad to semi-functional mouse"
+	} > /dev/stderr
+	exit 1
+}
+
+main "$@"
